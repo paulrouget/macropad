@@ -1,4 +1,5 @@
 #include <physical_layouts.dtsi>
+#include <dt-bindings/zmk/matrix_transform.h>
 
 / {
     chosen {
@@ -17,9 +18,23 @@
             ;
     };
 
+    // Direct kscan reports every key as (row 0, column = input index), so this
+    // is a single row of 4 columns. RC(0,i) -> keymap position i, keeping the
+    // key0 key1 / key2 key3 order used in the keymap. v0.3's physical-layout
+    // binding *requires* a transform.
+    default_transform: keymap_transform_0 {
+        compatible = "zmk,matrix-transform";
+        columns = <4>;
+        rows = <1>;
+        map = <
+            RC(0,0) RC(0,1) RC(0,2) RC(0,3)
+        >;
+    };
+
     physical_layout0: physical_layout_0 {
         compatible = "zmk,physical-layout";
         display-name = "Macropad";
+        transform = <&default_transform>;
         keys
             = <&key_physical_attrs 100 100    0   0 0 0 0>
             , <&key_physical_attrs 100 100  100   0 0 0 0>
