@@ -70,9 +70,10 @@ should edit repo files; it should NOT attempt to compile ZMK locally.
 4. Pair to the host over Bluetooth (device name "Macropad").
 
 **Debug loop:** if an Actions build fails, the owner will paste the log. Errors
-name the file and line; most are a missing `;`/`,` or a mismatch in the three
+name the file and line; most are a missing `;`/`,` or a mismatch in the four
 counts that MUST stay equal:
 - number of entries in `kscan0` `input-gpios`
+- number of `RC()` entries in the `default_transform` `map`
 - number of `keys` in the physical layout
 - number of `bindings` in each keymap layer
 
@@ -101,7 +102,7 @@ zmk-config/
 on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
-    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@v0.3   # match pinned ZMK
 ```
 
 ### `build.yaml`
@@ -121,7 +122,7 @@ manifest:
   projects:
     - name: zmk
       remote: zmkfirmware
-      revision: main
+      revision: v0.3   # pinned release — main breaks periodically (board migration)
       import: app/west.yml
   self:
     path: config
@@ -153,6 +154,7 @@ endif
 ### `config/boards/shields/macropad/macropad.overlay`
 ```dts
 #include <physical_layouts.dtsi>
+#include <dt-bindings/zmk/matrix_transform.h>
 
 / {
     chosen {
@@ -171,9 +173,19 @@ endif
             ;
     };
 
+    // v0.3's physical-layout REQUIRES a transform. Direct kscan reports every
+    // key as (row 0, column = input index), so this is one row of 4 columns.
+    default_transform: keymap_transform_0 {
+        compatible = "zmk,matrix-transform";
+        columns = <4>;
+        rows = <1>;
+        map = < RC(0,0) RC(0,1) RC(0,2) RC(0,3) >;
+    };
+
     physical_layout0: physical_layout_0 {
         compatible = "zmk,physical-layout";
         display-name = "Macropad";
+        transform = <&default_transform>;
         keys
             = <&key_physical_attrs 100 100    0   0 0 0 0>
             , <&key_physical_attrs 100 100  100   0 0 0 0>
@@ -280,8 +292,9 @@ confirm the current name.
 - Target board is always `nice_nano_v2`. Reference pins as `&pro_micro N` and
   translate to silkscreen labels using the table above when giving wiring
   directions.
-- After ANY change to key/encoder count, re-check the three counts match
-  (input-gpios, physical-layout keys, keymap bindings). Call this out explicitly.
+- After ANY change to key/encoder count, re-check the four counts match
+  (input-gpios, transform `map` entries, physical-layout keys, keymap
+  bindings). Call this out explicitly.
 - Keep diffs small and explain the "why" of each change; the owner is learning.
 - Pointer/mouse/scroll config in ZMK moves fast — when touching Phase 2, prefer
   first-party behaviors, and note anything the owner should verify against live
@@ -295,8 +308,8 @@ confirm the current name.
 - [x] Board sourced, identified as nice!nano v2 compatible
 - [x] UF2 bootloader confirmed (RST→GND double-tap mounts drive)
 - [ ] Headers soldered
-- [ ] Phase 1 config pushed + first successful Actions build
-- [ ] Firmware flashed + paired to iPad
+- [x] Phase 1 config pushed + first successful Actions build (ZMK pinned to v0.3)
+- [x] Firmware flashed + paired to iPad
 - [ ] Buttons wired + all 4 keys verified
 - [ ] Phase 2: encoder scroll
 - [ ] Phase 2: pointer
