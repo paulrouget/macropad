@@ -1,0 +1,17 @@
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+        default_layer {
+            display-name = "Base";
+            // order = pin order above: key0 key1 / key2 key3
+            bindings = <
+                &kp LG(C)   &kp LG(V)
+                &kp LG(Z)   &kp LG(LS(Z))
+            >;
+        };
+    };
+};
